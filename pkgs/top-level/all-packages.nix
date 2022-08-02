@@ -20587,6 +20587,11 @@ with pkgs;
 
   rlottie = callPackage ../development/libraries/rlottie { };
 
+  roc = callPackage ../development/compilers/roc {
+    llvmPackages = llvmPackages_13;
+    inherit (darwin.apple_sdk.frameworks) AppKit CoreFoundation CoreServices CoreVideo Foundation Metal Security;
+  };
+
   rocksdb = callPackage ../development/libraries/rocksdb { };
 
   rocksdb_lite = rocksdb.override { enableLite = true; };

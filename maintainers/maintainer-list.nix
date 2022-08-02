@@ -892,6 +892,12 @@
     githubId = 301546;
     name = "Antoine Roy-Gobeil";
   };
+  Anton-4 = {
+    email = "l8dyum3e4@mozmail.com";
+    github = "Anton-4";
+    githubId = 17049058;
+    name = "Anton";
+  };
   anton-dessiatov = {
     email = "anton.dessiatov@gmail.com";
     github = "anton-dessiatov";
@@ -11093,6 +11099,12 @@
     github = "rtburns-jpl";
     githubId = 47790121;
     name = "Ryan Burns";
+  };
+  rtfeldman = {
+    email = "nix@rtfeldman.com";
+    github = "rtfeldman";
+    githubId = 1094080;
+    name = "Richard Feldman";
   };
   rtreffer = {
     email = "treffer+nixos@measite.de";

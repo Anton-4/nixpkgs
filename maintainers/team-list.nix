@@ -607,6 +607,16 @@ with lib.maintainers; {
     enableFeatureFreezePing = true;
   };
 
+  roc = {
+    members = [
+      Anton-4
+      rtfeldman
+    ];
+    scope = "Maintain Roc related packages.";
+    shortName = "Roc";
+    enableFeatureFreezePing = true;
+  };
+
   ruby = {
     members = [
       marsam
