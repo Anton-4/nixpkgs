@@ -12,11 +12,11 @@ buildGoModule rec {
     fetchSubmodules = true;
   };
 
-  vendorSha256 = null;
+  vendorHash = null;
 
   doCheck = false;
 
-  ldflags = [ "-X main.version=${version}" "-X main.distribution=nix" ];
+  ldflags = [ "-s" "-w" "-X main.version=${version}" "-X main.distribution=nix" ];
 
   subPackages = [ "." ];
 

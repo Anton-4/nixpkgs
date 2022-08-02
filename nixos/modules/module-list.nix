@@ -10,6 +10,7 @@
   ./config/xdg/mime.nix
   ./config/xdg/portal.nix
   ./config/xdg/portals/wlr.nix
+  ./config/xdg/portals/lxqt.nix
   ./config/appstream.nix
   ./config/console.nix
   ./config/xdg/sounds.nix
@@ -214,6 +215,7 @@
   ./programs/systemtap.nix
   ./programs/starship.nix
   ./programs/steam.nix
+  ./programs/streamdeck-ui.nix
   ./programs/sway.nix
   ./programs/system-config-printer.nix
   ./programs/thefuck.nix
@@ -230,6 +232,7 @@
   ./programs/weylus.nix
   ./programs/wireshark.nix
   ./programs/wshowkeys.nix
+  ./programs/xfconf.nix
   ./programs/xfs_quota.nix
   ./programs/xonsh.nix
   ./programs/xss-lock.nix
@@ -351,6 +354,7 @@
   ./services/databases/cockroachdb.nix
   ./services/databases/couchdb.nix
   ./services/databases/dragonflydb.nix
+  ./services/databases/dgraph.nix
   ./services/databases/firebird.nix
   ./services/databases/foundationdb.nix
   ./services/databases/hbase.nix
@@ -443,6 +447,7 @@
   ./services/hardware/interception-tools.nix
   ./services/hardware/irqbalance.nix
   ./services/hardware/joycond.nix
+  ./services/hardware/kanata.nix
   ./services/hardware/lcd.nix
   ./services/hardware/lirc.nix
   ./services/hardware/nvidia-optimus.nix
@@ -470,7 +475,6 @@
   ./services/hardware/thermald.nix
   ./services/hardware/undervolt.nix
   ./services/hardware/vdr.nix
-  ./services/hardware/xow.nix
   ./services/home-automation/home-assistant.nix
   ./services/home-automation/zigbee2mqtt.nix
   ./services/logging/SystemdJournal2Gelf.nix
@@ -613,6 +617,7 @@
   ./services/misc/plex.nix
   ./services/misc/plikd.nix
   ./services/misc/podgrab.nix
+  ./services/misc/polaris.nix
   ./services/misc/prowlarr.nix
   ./services/misc/tautulli.nix
   ./services/misc/pinnwand.nix
@@ -825,6 +830,7 @@
   ./services/networking/libreswan.nix
   ./services/networking/lldpd.nix
   ./services/networking/logmein-hamachi.nix
+  ./services/networking/lokinet.nix
   ./services/networking/lxd-image-server.nix
   ./services/networking/magic-wormhole-mailbox-server.nix
   ./services/networking/matterbridge.nix
@@ -997,6 +1003,7 @@
   ./services/security/oauth2_proxy.nix
   ./services/security/oauth2_proxy_nginx.nix
   ./services/security/opensnitch.nix
+  ./services/security/pass-secret-service.nix
   ./services/security/privacyidea.nix
   ./services/security/physlock.nix
   ./services/security/shibboleth-sp.nix
@@ -1029,6 +1036,7 @@
   ./services/torrent/peerflix.nix
   ./services/torrent/rtorrent.nix
   ./services/torrent/transmission.nix
+  ./services/tracing/tempo.nix
   ./services/ttys/getty.nix
   ./services/ttys/gpm.nix
   ./services/ttys/kmscon.nix
@@ -1044,7 +1052,6 @@
   ./services/web-apps/code-server.nix
   ./services/web-apps/baget.nix
   ./services/web-apps/convos.nix
-  ./services/web-apps/cryptpad.nix
   ./services/web-apps/dex.nix
   ./services/web-apps/discourse.nix
   ./services/web-apps/documize.nix
@@ -1056,6 +1063,7 @@
   ./services/web-apps/gerrit.nix
   ./services/web-apps/gotify-server.nix
   ./services/web-apps/grocy.nix
+  ./services/web-apps/healthchecks.nix
   ./services/web-apps/hedgedoc.nix
   ./services/web-apps/hledger-web.nix
   ./services/web-apps/icingaweb2/icingaweb2.nix
@@ -1079,6 +1087,8 @@
   ./services/web-apps/nexus.nix
   ./services/web-apps/nifi.nix
   ./services/web-apps/node-red.nix
+  ./services/web-apps/phylactery.nix
+  ./services/web-apps/onlyoffice.nix
   ./services/web-apps/pict-rs.nix
   ./services/web-apps/peertube.nix
   ./services/web-apps/plantuml-server.nix
@@ -1270,7 +1280,6 @@
   ./virtualisation/parallels-guest.nix
   ./virtualisation/podman/default.nix
   ./virtualisation/qemu-guest-agent.nix
-  ./virtualisation/railcar.nix
   ./virtualisation/spice-usb-redirection.nix
   ./virtualisation/virtualbox-guest.nix
   ./virtualisation/virtualbox-host.nix

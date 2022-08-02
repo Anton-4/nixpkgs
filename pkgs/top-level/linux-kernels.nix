@@ -57,6 +57,10 @@ in {
   kernels = recurseIntoAttrs (lib.makeExtensible (self: with self;
     let callPackage = newScope self; in {
 
+    # NOTE: PLEASE DO NOT ADD NEW VENDOR KERNELS TO NIXPKGS.
+    # New vendor kernels should go to nixos-hardware instead.
+    # e.g. https://github.com/NixOS/nixos-hardware/tree/master/microsoft/surface/kernel
+
     linux_mptcp_95 = callPackage ../os-specific/linux/kernel/linux-mptcp-95.nix {
       kernelPatches = linux_4_19.kernelPatches;
     };
@@ -171,6 +175,13 @@ in {
       ];
     };
 
+    linux_5_19 = callPackage ../os-specific/linux/kernel/linux-5.19.nix {
+      kernelPatches = [
+        kernelPatches.bridge_stp_helper
+        kernelPatches.request_key_helper
+      ];
+    };
+
     linux_testing = let
       testing = callPackage ../os-specific/linux/kernel/linux-testing.nix {
         kernelPatches = [
@@ -196,36 +207,35 @@ in {
       ];
     };
 
-    linux_zen = callPackage ../os-specific/linux/kernel/linux-zen.nix {
+    # Using zenKernels like this due lqx&zen came from one source, but may have different base kernel version
+    # https://github.com/NixOS/nixpkgs/pull/161773#discussion_r820134708
+    zenKernels = callPackage ../os-specific/linux/kernel/zen-kernels.nix;
+
+    linux_zen = (zenKernels {
+      kernelPatches = [
+        kernelPatches.bridge_stp_helper
+        kernelPatches.request_key_helper
+      ];
+    }).zen;
+
+    linux_lqx = (zenKernels {
+      kernelPatches = [
+        kernelPatches.bridge_stp_helper
+        kernelPatches.request_key_helper
+      ];
+    }).lqx;
+
+    # This contains the variants of the XanMod kernel
+    xanmodKernels = callPackage ../os-specific/linux/kernel/xanmod-kernels.nix {
       kernelPatches = [
         kernelPatches.bridge_stp_helper
         kernelPatches.request_key_helper
       ];
     };
 
-    linux_lqx = callPackage ../os-specific/linux/kernel/linux-lqx.nix {
-      kernelPatches = [
-        kernelPatches.bridge_stp_helper
-        kernelPatches.request_key_helper
-      ];
-    };
-
-    # This contains both the STABLE and EDGE variants of the XanMod kernel
-    xanmodKernels = callPackage ../os-specific/linux/kernel/xanmod-kernels.nix;
-
-    linux_xanmod = (xanmodKernels {
-      kernelPatches = [
-        kernelPatches.bridge_stp_helper
-        kernelPatches.request_key_helper
-      ];
-    }).stable;
-
-    linux_xanmod_latest = (xanmodKernels {
-      kernelPatches = [
-        kernelPatches.bridge_stp_helper
-        kernelPatches.request_key_helper
-      ];
-    }).edge;
+    linux_xanmod = xanmodKernels.lts;
+    linux_xanmod_latest = xanmodKernels.edge;
+    linux_xanmod_tt = xanmodKernels.tt;
 
     linux_libre = deblobKernel packageAliases.linux_default.kernel;
 
@@ -371,6 +381,8 @@ in {
 
     rtl8189es = callPackage ../os-specific/linux/rtl8189es { };
 
+    rtl8189fs = callPackage ../os-specific/linux/rtl8189fs { };
+
     rtl8723bs = callPackage ../os-specific/linux/rtl8723bs { };
 
     rtl8812au = callPackage ../os-specific/linux/rtl8812au { };
@@ -423,8 +435,7 @@ in {
 
     phc-intel = if lib.versionAtLeast kernel.version "4.10" then callPackage ../os-specific/linux/phc-intel { } else null;
 
-    # Disable for kernels 4.15 and above due to compatibility issues
-    prl-tools = if lib.versionOlder kernel.version "4.15" then callPackage ../os-specific/linux/prl-tools { } else null;
+    prl-tools = callPackage ../os-specific/linux/prl-tools { };
 
     sch_cake = callPackage ../os-specific/linux/sch_cake { };
 
@@ -479,11 +490,11 @@ in {
 
     x86_energy_perf_policy = callPackage ../os-specific/linux/x86_energy_perf_policy { };
 
-    xmm7360-pci = callPackage ../os-specific/linux/xmm7360-pci { };
-
     xone = if lib.versionAtLeast kernel.version "5.4" then callPackage ../os-specific/linux/xone { } else null;
 
     xpadneo = callPackage ../os-specific/linux/xpadneo { };
+
+    ithc = callPackage ../os-specific/linux/ithc { };
 
     zenpower = callPackage ../os-specific/linux/zenpower { };
 
@@ -495,8 +506,13 @@ in {
 
     can-isotp = callPackage ../os-specific/linux/can-isotp { };
 
+    qc71_laptop = callPackage ../os-specific/linux/qc71_laptop { };
+
+    hid-ite8291r3 = callPackage ../os-specific/linux/hid-ite8291r3 { };
+
   } // lib.optionalAttrs config.allowAliases {
     ati_drivers_x11 = throw "ati drivers are no longer supported by any kernel >=4.1"; # added 2021-05-18;
+    xmm7360-pci = throw "Support for the XMM7360 WWAN card was added to the iosm kmod in mainline kernel version 5.18";
   });
 
   hardenedPackagesFor = kernel: overrides: packagesFor (hardenedKernelFor kernel overrides);
@@ -513,6 +529,7 @@ in {
     linux_5_16 = throw "linux 5.16 was removed because it reached its end of life upstream"; # Added 2022-04-23
     linux_5_17 = throw "linux 5.17 was removed because it reached its end of life upstream"; # Added 2022-06-23
     linux_5_18 = recurseIntoAttrs (packagesFor kernels.linux_5_18);
+    linux_5_19 = recurseIntoAttrs (packagesFor kernels.linux_5_19);
   };
 
   rtPackages = {
@@ -557,6 +574,7 @@ in {
     linux_lqx = recurseIntoAttrs (packagesFor kernels.linux_lqx);
     linux_xanmod = recurseIntoAttrs (packagesFor kernels.linux_xanmod);
     linux_xanmod_latest = recurseIntoAttrs (packagesFor kernels.linux_xanmod_latest);
+    linux_xanmod_tt = recurseIntoAttrs (packagesFor kernels.linux_xanmod_tt);
 
     hardkernel_4_14 = recurseIntoAttrs (packagesFor kernels.linux_hardkernel_4_14);
 
@@ -568,7 +586,7 @@ in {
   packageAliases = {
     linux_default = packages.linux_5_15;
     # Update this when adding the newest kernel major version!
-    linux_latest = packages.linux_5_18;
+    linux_latest = packages.linux_5_19;
     linux_mptcp = packages.linux_mptcp_95;
     linux_rt_default = packages.linux_rt_5_4;
     linux_rt_latest = packages.linux_rt_5_10;

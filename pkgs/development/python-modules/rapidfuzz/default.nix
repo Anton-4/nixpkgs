@@ -20,7 +20,7 @@
 
 buildPythonPackage rec {
   pname = "rapidfuzz";
-  version = "2.0.15";
+  version = "2.1.3";
 
   disabled = pythonOlder "3.6";
 
@@ -29,8 +29,8 @@ buildPythonPackage rec {
   src = fetchFromGitHub {
     owner = "maxbachmann";
     repo = "RapidFuzz";
-    rev = "v${version}";
-    hash = "sha256-wn77gA6UCgsdDf3FZgjrA5gSWpWJg3YoUhx88X7aVcM=";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-vK/56+5R6SgDz9DT92PzvDn8cSxSyUiCsV2EOcsGWTA=";
   };
 
   nativeBuildInputs = [
@@ -50,6 +50,10 @@ buildPythonPackage rec {
     taskflow
   ];
 
+  preBuild = ''
+    export RAPIDFUZZ_BUILD_EXTENSION=1
+  '';
+
   propagatedBuildInputs = [
     jarowinkler
     numpy
@@ -60,11 +64,6 @@ buildPythonPackage rec {
     pandas
     pytestCheckHook
   ];
-
-  preCheck = ''
-    # import from $out
-    rm -r rapidfuzz
-  '';
 
   pythonImportsCheck = [
     "rapidfuzz.fuzz"

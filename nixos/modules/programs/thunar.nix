@@ -16,7 +16,7 @@ in {
       plugins = mkOption {
         default = [];
         type = types.listOf types.package;
-        description = "List of thunar plugins to install.";
+        description = lib.mdDoc "List of thunar plugins to install.";
         example = literalExpression "with pkgs.xfce; [ thunar-archive-plugin thunar-volman ]";
       };
 
@@ -33,12 +33,13 @@ in {
 
       services.dbus.packages = [
         package
-        pkgs.xfce.xfconf
       ];
 
       systemd.packages = [
         package
       ];
+
+      programs.xfconf.enable = true;
     }
   );
 }

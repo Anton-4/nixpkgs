@@ -1,17 +1,17 @@
-{ lib, fetchFromGitHub, buildGoModule, nixosTests }:
+{ lib, fetchzip, buildGoModule, nixosTests }:
 
 buildGoModule rec {
   pname = "traefik";
-  version = "2.7.1";
+  version = "2.8.1";
 
-  src = fetchFromGitHub {
-    owner = "traefik";
-    repo = "traefik";
-    rev = "v${version}";
-    sha256 = "sha256-uTE0Z7lgxKNq1wQSMUSp9dMfxV+aIm7cwYSkZBUdnug=";
+  # Archive with static assets for webui
+  src = fetchzip {
+    url = "https://github.com/traefik/traefik/releases/download/v${version}/traefik-v${version}.src.tar.gz";
+    sha256 = "sha256-+5A94I9WKFs2/etoQpwImt6yneX8pt44F9NfFF/X0Hk=";
+    stripRoot = false;
   };
 
-  vendorSha256 = "sha256-WlLntYrXs1kOu26yNeZI1xpb6FsHPiA/bNzaxCZTG4Y=";
+  vendorSha256 = "sha256-QHddmS1edjHckl3tpI9BDL4jjdvsMCw9aA9K/g3fSug=";
 
   subPackages = [ "cmd/traefik" ];
 

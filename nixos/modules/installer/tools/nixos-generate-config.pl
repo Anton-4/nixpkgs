@@ -85,7 +85,7 @@ sub debug {
 
 
 # nixpkgs.system
-my ($status, @systemLines) = runCommand("nix-instantiate --impure --eval --expr builtins.currentSystem");
+my ($status, @systemLines) = runCommand("@nixInstantiate@ --impure --eval --expr builtins.currentSystem");
 if ($status != 0 || join("", @systemLines) =~ /error/) {
     die "Failed to retrieve current system type from nix.\n";
 }
@@ -300,6 +300,12 @@ if ($virt eq "oracle") {
     push @attrs, "virtualisation.virtualbox.guest.enable = true;"
 }
 
+# Check if we're a Parallels guest. If so, enable the guest additions.
+# It is blocked by https://github.com/systemd/systemd/pull/23859
+if ($virt eq "parallels") {
+    push @attrs, "hardware.parallels.enable = true;";
+    push @attrs, "nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ \"prl-tools\" ];";
+}
 
 # Likewise for QEMU.
 if ($virt eq "qemu" || $virt eq "kvm" || $virt eq "bochs") {

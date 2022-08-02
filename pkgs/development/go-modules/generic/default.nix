@@ -19,17 +19,20 @@
 # path to go.mod and go.sum directory
 , modRoot ? "./"
 
-# vendorSha256 is the sha256 of the vendored dependencies
+# vendorHash is the SRI hash of the vendored dependencies
 #
-# if vendorSha256 is null, then we won't fetch any dependencies and
+# if vendorHash is null, then we won't fetch any dependencies and
 # rely on the vendor folder within the source.
-, vendorSha256
+, vendorHash ? "_unset"
+# same as vendorHash, but outputHashAlgo is hardcoded to sha256
+# so regular base32 sha256 hashes work
+, vendorSha256 ? "_unset"
 # Whether to delete the vendor folder supplied with the source.
 , deleteVendor ? false
 # Whether to fetch (go mod download) and proxy the vendor directory.
 # This is useful if your code depends on c code and go mod tidy does not
 # include the needed sources to build or if any dependency has case-insensitive
-# conflicts which will produce platform dependant `vendorSha256` checksums.
+# conflicts which will produce platform dependant `vendorHash` checksums.
 , proxyVendor ? false
 
 # We want parallel builds by default
@@ -38,6 +41,8 @@
 # Do not enable this without good reason
 # IE: programs coupled with the compiler
 , allowGoReference ? false
+
+, CGO_ENABLED ? go.CGO_ENABLED
 
 , meta ? {}
 
@@ -53,11 +58,23 @@
 with builtins;
 
 assert goPackagePath != "" -> throw "`goPackagePath` is not needed with `buildGoModule`";
+assert (vendorSha256 == "_unset" && vendorHash == "_unset") -> throw "either `vendorHash` or `vendorSha256` is required";
+assert (vendorSha256 != "_unset" && vendorHash != "_unset") -> throw "both `vendorHash` and `vendorSha256` set. only one can be set.";
 
 let
-  args = removeAttrs args' [ "overrideModAttrs" "vendorSha256" ];
+  hasAnyVendorHash = (vendorSha256 != null && vendorSha256 != "_unset") || (vendorHash != null && vendorHash != "_unset");
+  vendorHashType =
+    if hasAnyVendorHash then
+      if vendorSha256 != null && vendorSha256 != "_unset" then
+        "sha256"
+      else
+        "sri"
+    else
+      null;
 
-  go-modules = if vendorSha256 != null then stdenv.mkDerivation (let modArgs = {
+  args = removeAttrs args' [ "overrideModAttrs" "vendorSha256" "vendorHash" ];
+
+  go-modules = if hasAnyVendorHash then stdenv.mkDerivation (let modArgs = {
 
     name = "${name}-go-modules";
 
@@ -96,7 +113,7 @@ let
       fi
     '' + ''
       if [ -d vendor ]; then
-        echo "vendor folder exists, please set 'vendorSha256 = null;' in your expression"
+        echo "vendor folder exists, please set 'vendorHash = null;' or 'vendorSha256 = null;' in your expression"
         exit 10
       fi
 
@@ -104,7 +121,10 @@ let
       mkdir -p "''${GOPATH}/pkg/mod/cache/download"
       go mod download
     '' else ''
-      go mod vendor
+      if (( "''${NIX_DEBUG:-0}" >= 1 )); then
+        goModVendorFlags+=(-v)
+      fi
+      go mod vendor "''${goModVendorFlags[@]}"
     ''}
 
       mkdir -p vendor
@@ -129,9 +149,14 @@ let
   }; in modArgs // (
       {
         outputHashMode = "recursive";
+      } // (if (vendorHashType == "sha256") then {
         outputHashAlgo = "sha256";
         outputHash = vendorSha256;
-      }
+      } else {
+        outputHash = vendorHash;
+      }) // (lib.optionalAttrs (vendorHashType == "sri" && vendorHash == "") {
+        outputHashAlgo = "sha256";
+      })
   ) // overrideModAttrs modArgs) else "";
 
   package = stdenv.mkDerivation (args // {
@@ -141,6 +166,7 @@ let
 
     GO111MODULE = "on";
     GOFLAGS = lib.optionals (!proxyVendor) [ "-mod=vendor" ] ++ lib.optionals (!allowGoReference) [ "-trimpath" ];
+    inherit CGO_ENABLED;
 
     configurePhase = args.configurePhase or ''
       runHook preConfigure
@@ -150,7 +176,7 @@ let
       export GOPROXY=off
       export GOSUMDB=off
       cd "$modRoot"
-    '' + lib.optionalString (vendorSha256 != null) ''
+    '' + lib.optionalString hasAnyVendorHash ''
       ${if proxyVendor then ''
         export GOPROXY=file://${go-modules}
       '' else ''
@@ -175,12 +201,22 @@ let
       exclude+='\)'
 
       buildGoDir() {
-        local d; local cmd;
-        cmd="$1"
-        d="$2"
+        local cmd="$1" dir="$2"
+
         . $TMPDIR/buildFlagsArray
+
+        declare -a flags
+        flags+=($buildFlags "''${buildFlagsArray[@]}")
+        flags+=(''${tags:+-tags=${lib.concatStringsSep "," tags}})
+        flags+=(''${ldflags:+-ldflags="$ldflags"})
+        flags+=("-v" "-p" "$NIX_BUILD_CORES")
+
+        if [ "$cmd" = "test" ]; then
+          flags+=($checkFlags)
+        fi
+
         local OUT
-        if ! OUT="$(go $cmd $buildFlags "''${buildFlagsArray[@]}" ''${tags:+-tags=${lib.concatStringsSep "," tags}} ''${ldflags:+-ldflags="$ldflags"} -v -p $NIX_BUILD_CORES $d 2>&1)"; then
+        if ! OUT="$(go $cmd "''${flags[@]}" $dir 2>&1)"; then
           if ! echo "$OUT" | grep -qE '(no( buildable| non-test)?|build constraints exclude all) Go (source )?files'; then
             echo "$OUT" >&2
             return 1
@@ -238,7 +274,7 @@ let
       runHook preCheck
 
       for pkg in $(getGoDirs test); do
-        buildGoDir test $checkFlags "$pkg"
+        buildGoDir test "$pkg"
       done
 
       runHook postCheck
@@ -258,18 +294,14 @@ let
 
     disallowedReferences = lib.optional (!allowGoReference) go;
 
-    passthru = passthru // { inherit go go-modules vendorSha256 ; };
+    passthru = passthru // { inherit go go-modules vendorSha256 vendorHash; };
 
     enableParallelBuilding = enableParallelBuilding;
 
     meta = {
       # Add default meta information
       platforms = go.meta.platforms or lib.platforms.all;
-    } // meta // {
-      # add an extra maintainer to every package
-      maintainers = (meta.maintainers or []) ++
-                    [ lib.maintainers.kalbasit ];
-    };
+    } // meta;
   });
 in
 lib.warnIf (buildFlags != "" || buildFlagsArray != "")

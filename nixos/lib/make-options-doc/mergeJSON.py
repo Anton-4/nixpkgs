@@ -53,23 +53,27 @@ def convertMD(options: Dict[str, Any]) -> str:
         '.note': 'note'
     }
     class Renderer(mistune.renderers.BaseRenderer):
+        def __init__(self, path):
+            self.path = path
         def _get_method(self, name):
             try:
                 return super(Renderer, self)._get_method(name)
             except AttributeError:
-                def not_supported(children, **kwargs):
-                    raise NotImplementedError("md node not supported yet", name, children, **kwargs)
+                def not_supported(*args, **kwargs):
+                    raise NotImplementedError("md node not supported yet", self.path, name, args, **kwargs)
                 return not_supported
 
         def text(self, text):
             return escape(text)
         def paragraph(self, text):
             return text + "\n\n"
+        def newline(self):
+            return "<literallayout>\n</literallayout>"
         def codespan(self, text):
-            return f"<literal>{text}</literal>"
+            return f"<literal>{escape(text)}</literal>"
         def block_code(self, text, info=None):
             info = f" language={quoteattr(info)}" if info is not None else ""
-            return f"<programlisting{info}>\n{text}</programlisting>"
+            return f"<programlisting{info}>\n{escape(text)}</programlisting>"
         def link(self, link, text=None, title=None):
             if link[0:1] == '#':
                 attr = "linkend"
@@ -102,6 +106,8 @@ def convertMD(options: Dict[str, Any]) -> str:
             # a single paragraph and the original docbook string is no longer
             # available to restore the trailer.
             return f"<{tag}><para>{text.rstrip()}</para></{tag}>"
+        def block_quote(self, text):
+            return f"<blockquote><para>{text}</para></blockquote>"
         def command(self, text):
             return f"<command>{escape(text)}</command>"
         def option(self, text):
@@ -162,8 +168,8 @@ def convertMD(options: Dict[str, Any]) -> str:
         md.block.rules.append('admonition')
     plugins.append(admonition)
 
-    def convertString(text: str) -> str:
-        rendered = mistune.markdown(text, renderer=Renderer(), plugins=plugins)
+    def convertString(path: str, text: str) -> str:
+        rendered = mistune.markdown(text, renderer=Renderer(path), plugins=plugins)
         # keep trailing spaces so we can diff the generated XML to check for conversion bugs.
         return rendered.rstrip() + text[len(text.rstrip()):]
 
@@ -175,12 +181,12 @@ def convertMD(options: Dict[str, Any]) -> str:
 
     for (name, option) in options.items():
         if optionIs(option, 'description', 'mdDoc'):
-            option['description'] = convertString(option['description']['text'])
+            option['description'] = convertString(name, option['description']['text'])
         if optionIs(option, 'example', 'literalMD'):
-            docbook = convertString(option['example']['text'])
+            docbook = convertString(name, option['example']['text'])
             option['example'] = { '_type': 'literalDocBook', 'text': docbook }
         if optionIs(option, 'default', 'literalMD'):
-            docbook = convertString(option['default']['text'])
+            docbook = convertString(name, option['default']['text'])
             option['default'] = { '_type': 'literalDocBook', 'text': docbook }
 
     return options
@@ -194,7 +200,7 @@ overrides = pivot(json.load(open(sys.argv[2 + optOffset], 'r')))
 for (k, v) in options.items():
     # The _module options are not declared in nixos/modules
     if v.value['loc'][0] != "_module":
-        v.value['declarations'] = list(map(lambda s: f'nixos/modules/{s}', v.value['declarations']))
+        v.value['declarations'] = list(map(lambda s: f'nixos/modules/{s}' if isinstance(s, str) else s, v.value['declarations']))
 
 # merge both descriptions
 for (k, v) in overrides.items():

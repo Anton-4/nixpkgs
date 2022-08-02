@@ -135,6 +135,14 @@
       </listitem>
       <listitem>
         <para>
+          <link xlink:href="https://github.com/jtroo/kanata">kanata</link>,
+          a tool to improve keyboard comfort and usability with advanced
+          customization. Available as
+          <link xlink:href="options.html#opt-services.kanata.enable">services.kanata</link>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           <link xlink:href="https://github.com/aiberia/persistent-evdev">persistent-evdev</link>,
           a daemon to add virtual proxy devices that mirror a physical
           input device but persist even if the underlying hardware is
@@ -154,6 +162,13 @@
           <link xlink:href="https://www.expressvpn.com">expressvpn</link>,
           the CLI client for ExpressVPN. Available as
           <link linkend="opt-services.expressvpn.enable">services.expressvpn</link>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <link xlink:href="https://www.grafana.com/oss/tempo/">Grafana
+          Tempo</link>, a distributed tracing store. Available as
+          <link linkend="opt-services.tempo.enable">services.tempo</link>.
         </para>
       </listitem>
     </itemizedlist>
@@ -245,9 +260,40 @@
       </listitem>
       <listitem>
         <para>
+          <literal>pkgs.cosign</literal> does not provide the
+          <literal>cosigned</literal> binary anymore.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           riak package removed along with
           <literal>services.riak</literal> module, due to lack of
           maintainer to update the package.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          xow package removed along with the
+          <literal>hardware.xow</literal> module, due to the project
+          being deprecated in favor of <literal>xone</literal>, which is
+          available via the <literal>hardware.xone</literal> module.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>services.graphite.api</literal> and
+          <literal>services.graphite.beacon</literal> NixOS options, and
+          the <literal>python3.pkgs.graphite_api</literal>,
+          <literal>python3.pkgs.graphite_beacon</literal> and
+          <literal>python3.pkgs.influxgraph</literal> packages, have
+          been removed due to lack of upstream maintenance.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>meta.mainProgram</literal> attribute of packages
+          in <literal>wineWowPackages</literal> now defaults to
+          <literal>&quot;wine64&quot;</literal>.
         </para>
       </listitem>
       <listitem>
@@ -287,6 +333,13 @@
       </listitem>
       <listitem>
         <para>
+          The Redis module now disables RDB persistence when
+          <literal>services.redis.servers.&lt;name&gt;.save = []</literal>
+          instead of using the Redis default.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           Matrix Synapse now requires entries in the
           <literal>state_group_edges</literal> table to be unique, in
           order to prevent accidentally introducing duplicate
@@ -298,9 +351,32 @@
       </listitem>
       <listitem>
         <para>
+          <literal>dockerTools.buildImage</literal> deprecates the
+          misunderstood <literal>contents</literal> parameter, in favor
+          of <literal>copyToRoot</literal>. Use
+          <literal>copyToRoot = buildEnv { ... };</literal> or similar
+          if you intend to add packages to <literal>/bin</literal>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           memtest86+ was updated from 5.00-coreboot-002 to 6.00-beta2.
           It is now the upstream version from https://www.memtest.org/,
           as coreboot’s fork is no longer available.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Add udev rules for the Teensy family of microcontrollers.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>pass-secret-service</literal> package now
+          includes systemd units from upstream, so adding it to the
+          NixOS <literal>services.dbus.packages</literal> option will
+          make it start automatically as a systemd user service when an
+          application tries to talk to the libsecret D-Bus API.
         </para>
       </listitem>
       <listitem>
@@ -313,6 +389,13 @@
           has been renamed to
           <literal>programs.thunar.plugins</literal>, and in a future
           release it may be removed.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          There is a new module for the <literal>xfconf</literal>
+          program (the Xfce configuration storage system), which has a
+          dbus service.
         </para>
       </listitem>
     </itemizedlist>

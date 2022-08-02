@@ -22,6 +22,10 @@
 , transformOptions ? lib.id  # function for additional tranformations of the options
 , documentType ? "appendix" # TODO deprecate "appendix" in favor of "none"
                             #      and/or rename function to moduleOptionDoc for clean slate
+
+  # If you include more than one option list into a document, you need to
+  # provide different ids.
+, variablelistId ? "configuration-variable-list"
 , revision ? "" # Specify revision for the options
 # a set of options the docs we are generating will be merged into, as if by recursiveUpdate.
 # used to split the options doc build into a static part (nixos/modules) and a dynamic part
@@ -95,6 +99,14 @@ let
 
   optionsNix = builtins.listToAttrs (map (o: { name = o.name; value = removeAttrs o ["name" "visible" "internal"]; }) optionsList);
 
+  pythonMD =
+    let
+      self = (pkgs.python3Minimal.override {
+        inherit self;
+        includeSiteCustomize = true;
+        });
+      in self.withPackages (p: [ p.mistune_2_0 ]);
+
 in rec {
   inherit optionsNix;
 
@@ -112,17 +124,20 @@ in rec {
 
   optionsJSON = pkgs.runCommand "options.json"
     { meta.description = "List of NixOS options in JSON format";
-      buildInputs = [
-        pkgs.brotli
-        (let
-          self = (pkgs.python3Minimal.override {
-            inherit self;
-            includeSiteCustomize = true;
-           });
-         in self.withPackages (p: [ p.mistune_2_0 ]))
-      ];
+      buildInputs = [ pkgs.brotli pythonMD ];
       options = builtins.toFile "options.json"
         (builtins.unsafeDiscardStringContext (builtins.toJSON optionsNix));
+      # convert markdown to docbook in its own derivation to cache the
+      # conversion results. the conversion is surprisingly expensive.
+      baseJSON =
+        if baseOptionsJSON != null
+        then
+          pkgs.runCommand "base-json-md-converted" {
+            buildInputs = [ pythonMD ];
+          } ''
+            python ${./mergeJSON.py} ${baseOptionsJSON} <(echo '{}') > $out
+          ''
+        else null;
     }
     ''
       # Export list of options in different format.
@@ -139,7 +154,7 @@ in rec {
           else ''
             python ${./mergeJSON.py} \
               ${lib.optionalString warningsAreErrors "--warnings-are-errors"} \
-              ${baseOptionsJSON} $options \
+              $baseJSON $options \
               > $dst/options.json
           ''
       }
@@ -177,6 +192,7 @@ in rec {
     ${pkgs.libxslt.bin}/bin/xsltproc \
       --stringparam documentType '${documentType}' \
       --stringparam revision '${revision}' \
+      --stringparam variablelistId '${variablelistId}' \
       -o intermediate.xml ${./options-to-docbook.xsl} sorted.xml
     ${pkgs.libxslt.bin}/bin/xsltproc \
       -o "$out" ${./postprocess-option-descriptions.xsl} intermediate.xml

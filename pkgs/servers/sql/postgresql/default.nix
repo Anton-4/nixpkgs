@@ -4,14 +4,13 @@ let
       # dependencies
       { stdenv, lib, fetchurl, makeWrapper
       , glibc, zlib, readline, openssl, icu, lz4, systemd, libossp_uuid
-      , pkg-config, libxml2, tzdata
+      , pkg-config, libxml2, tzdata, libkrb5
 
       # This is important to obtain a version of `libpq` that does not depend on systemd.
-      , enableSystemd ? (lib.versionAtLeast version "9.6" && !stdenv.isDarwin)
-      , gssSupport ? with stdenv.hostPlatform; !isWindows && !isStatic, libkrb5
+      , enableSystemd ? (lib.versionAtLeast version "9.6" && !stdenv.isDarwin && !stdenv.hostPlatform.isStatic)
+      , gssSupport ? with stdenv.hostPlatform; !isWindows && !isStatic
 
-
-      # for postgreql.pkgs
+      # for postgresql.pkgs
       , this, self, newScope, buildEnv
 
       # source specification
@@ -239,9 +238,9 @@ in self: {
   };
 
   postgresql_14 = self.callPackage generic {
-    version = "14.3";
+    version = "14.4";
     psqlSchema = "14";
-    sha256 = "sha256-J5BXNov1mpGcBa2o+VxeBKu0PnS5oqacPUaiDgeprzg=";
+    sha256 = "sha256-wjtiN8UjHHkVEb3HkJhhfWhS6eO982Dv2LXRWho9j2o=";
     this = self.postgresql_14;
     thisAttr = "postgresql_14";
     inherit self;

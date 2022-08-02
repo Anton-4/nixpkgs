@@ -5,14 +5,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "snakemake";
-  version = "7.8.3";
+  version = "7.12.0";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "snakemake";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-fYrsum056PCRRp4P5xO6yLfog3WrE/JR1ID7+iV85fc=";
+    hash = "sha256-URywo88EcQBYorwnKqgGOzunf2JunEWa36adhA1wha0=";
   };
 
   propagatedBuildInputs = with python3.pkgs; [

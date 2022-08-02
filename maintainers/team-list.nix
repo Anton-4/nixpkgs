@@ -98,6 +98,7 @@ with lib.maintainers; {
     members = [
       astro
       SuperSandro2000
+      revol-xut
     ];
     scope = "Maintain packages used in the C3D2 hackspace";
     shortName = "c3d2";
@@ -325,7 +326,6 @@ with lib.maintainers; {
   jitsi = {
     members = [
       cleeyv
-      petabyteboy
       ryantm
       yuka
     ];
